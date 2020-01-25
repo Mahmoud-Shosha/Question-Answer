@@ -1,8 +1,17 @@
-from flask import Flask, render_template
+from flask import Flask, g, render_template
+from database import get_db
 
 
 # MAke a flask app
 app = Flask(__name__)
+
+
+@app.teardown_appcontext
+def close_db(error):
+    """Close the DB connection if exist after appcontext teardown."""
+
+    if hasattr(g, 'db'):
+        g.db.close()
 
 
 @app.route('/')
