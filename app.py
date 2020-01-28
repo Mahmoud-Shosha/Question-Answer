@@ -169,6 +169,20 @@ def users():
     return render_template('users.html', user=user, users=users)
 
 
+@app.route('/promote/<user_id>')
+def promote(user_id):
+    """Promote the given user."""
+
+    # Settin the user as expert in the DB
+    db = get_db()
+    db.execute("update user set is_expert = 1 where id = ?;",
+               [user_id])
+    db.commit()
+
+    # Redirect to the users page
+    return redirect(url_for('users'))
+
+
 @app.route('/logout')
 def logout():
     """
