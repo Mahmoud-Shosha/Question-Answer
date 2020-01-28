@@ -90,8 +90,8 @@ def login():
         if check_password_hash(hashed_password, password):
             # login the user
             session['user'] = user['name']
-            # Temporary returning
-            return "login: {} ==>> {}".format(name, password)
+            # Redirecting the loged in user to the home page
+            return redirect(url_for('index'))
         else:
             # Temporary returning
             return "Error: {} ==>> {}".format(name, password)
