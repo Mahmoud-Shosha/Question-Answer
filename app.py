@@ -61,8 +61,10 @@ def register():
         db.execute("""insert into user (name, password, is_expert, is_admin)
                    values (?, ?, ?, ?)""", [name, password, 0, 0])
         db.commit()
-        # Temporary returning
-        return "{} ==>> {}".format(name, password)
+        # Login the user
+        session['user'] = name
+        # Redirecting the loged in user to the home page
+        return redirect(url_for('index'))
     else:
         # Getting the current user
         user = get_current_user()
