@@ -1,10 +1,14 @@
-from flask import Flask, g, render_template, request
+from flask import (Flask, g, render_template, request, session,
+                   url_for, redirect)
 from database import get_db
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import os
 
 
 # MAke a flask app
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(24)
 
 
 @app.teardown_appcontext
@@ -44,11 +48,33 @@ def register():
         return render_template('register.html')
 
 
-@app.route('/login')
+@app.route('/login', methods=['POST', 'GET'])
 def login():
     """The login page that allow you to login in the application."""
 
-    return render_template('login.html')
+    if request.method == 'POST':
+        # Getting the form data
+        name = request.form['name']
+        password = request.form['password']
+        # Getting the user from the DB
+        db = get_db()
+        cursor = db.execute("""select id, name, password from user
+                            where name = ?;""", [name])
+        user = cursor.fetchone()
+        # Checking the user password
+        hashed_password = user['password']
+        if check_password_hash(hashed_password, password):
+            # login the user
+            session['user'] = user['name']
+            # Temporary returning
+            return "login: {} ==>> {}".format(name, password)
+        else:
+            # Temporary returning
+            return "Error: {} ==>> {}".format(name, password)
+
+    else:
+        # Return the user login page
+        return render_template('login.html')
 
 
 @app.route('/question')
