@@ -54,7 +54,7 @@ def register():
         # Storing the user in the database
         db = get_db()
         db.execute("""insert into user (name, password, is_expert, is_admin)
-                   values (?, ?, ?, ?)""", [name, password, '0', '0'])
+                   values (?, ?, ?, ?)""", [name, password, 0, 0])
         db.commit()
         # Temporary returning
         return "{} ==>> {}".format(name, password)
