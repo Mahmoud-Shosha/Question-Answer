@@ -153,14 +153,20 @@ def unanswered():
 @app.route('/users')
 def users():
     """
-    The users page that allows the admin user to promote users to an expert.
+    The users page that lists all users for the admin
+    to be able to promote users.
     """
 
     # Getting the current user
     user = get_current_user()
 
+    # Getting all users from the DB
+    db = get_db()
+    cursor = db.execute("select id, name, is_expert from user;")
+    users = cursor.fetchall()
+
     # Return the users page according to the login user
-    return render_template('users.html', user=user)
+    return render_template('users.html', user=user, users=users)
 
 
 @app.route('/logout')
