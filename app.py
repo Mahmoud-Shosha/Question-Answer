@@ -38,7 +38,11 @@ def close_db(error):
 def index():
     """The home page of the application that lists all answered questions."""
 
-    return render_template('home.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the home page according to the login user
+    return render_template('home.html', user=user)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -60,8 +64,10 @@ def register():
         # Temporary returning
         return "{} ==>> {}".format(name, password)
     else:
-        # Return the user registeration page
-        return render_template('register.html')
+        # Getting the current user
+        user = get_current_user()
+        # Return the user registeration page according to the login user
+        return render_template('register.html', user=user)
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -89,8 +95,10 @@ def login():
             return "Error: {} ==>> {}".format(name, password)
 
     else:
-        # Return the user login page
-        return render_template('login.html')
+        # Getting the current user
+        user = get_current_user()
+        # Return the user login page according to the login user
+        return render_template('login.html', user=user)
 
 
 @app.route('/question')
@@ -100,28 +108,44 @@ def question():
     (question, answer, user, expert).
     """
 
-    return render_template('question.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the question page according to the login user
+    return render_template('question.html', user=user)
 
 
 @app.route('/answer')
 def answer():
     """The answer page that allows an expert to answer a specific question."""
 
-    return render_template('answer.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the answer page according to the login user
+    return render_template('answer.html', user=user)
 
 
 @app.route('/ask')
 def ask():
     """The ask page that allows the user to ask a question."""
 
-    return render_template('ask.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the ask page according to the login user
+    return render_template('ask.html', user=user)
 
 
 @app.route('/unanswered')
 def unanswered():
     """The unanswered page that list all unanswered question to the expert."""
 
-    return render_template('unanswered.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the unanswered page according to the login user
+    return render_template('unanswered.html', user=user)
 
 
 @app.route('/users')
@@ -130,7 +154,11 @@ def users():
     The users page that allows the admin user to promote users to an expert.
     """
 
-    return render_template('users.html')
+    # Getting the current user
+    user = get_current_user()
+
+    # Return the users page according to the login user
+    return render_template('users.html', user=user)
 
 
 @app.route('/logout')
