@@ -50,7 +50,8 @@ def register():
         name = request.form['name']
         password = request.form['password']
         # Hashin the password
-        password = generate_password_hash(request.form['password'], method='sha256')
+        password = generate_password_hash(request.form['password'],
+                                          method='sha256')
         # Storing the user in the database
         db = get_db()
         db.execute("""insert into user (name, password, is_expert, is_admin)
