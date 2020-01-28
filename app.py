@@ -11,6 +11,21 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 
 
+# Get the current user helper function
+def get_current_user():
+    """Return the current user row from the DB if login user, or None"""
+
+    user = None
+
+    if 'user' in session:
+        db = get_db()
+        cursor = db.execute("select * from user where name = ?;",
+                            [session['user']])
+        user = cursor.fetchone()
+
+    return user
+
+
 @app.teardown_appcontext
 def close_db(error):
     """Close the DB connection if exist after appcontext teardown."""
