@@ -117,5 +117,15 @@ def users():
     return render_template('users.html')
 
 
+@app.route('/logout')
+def logout():
+    """
+    The logout page that logs out the user and redirets to the home page.
+    """
+    session.pop('user')
+
+    return redirect(url_for('index'))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
