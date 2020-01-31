@@ -11,5 +11,5 @@ create table question (
     question text not null,
     answer text,
     asked_by_id integer not null,
-    answered_by_id integer not null
+    expert_id integer not null
 );
