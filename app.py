@@ -117,15 +117,30 @@ def question():
     return render_template('question.html', user=user)
 
 
-@app.route('/answer')
-def answer():
+@app.route('/answer/<question_id>', methods=["GET", "POST"])
+def answer(question_id):
     """The answer page that allows an expert to answer a specific question."""
 
-    # Getting the current user
-    user = get_current_user()
+    # Get the current DB connection
+    db = get_db()
 
-    # Return the answer page according to the login user
-    return render_template('answer.html', user=user)
+    if request.method == "POST":
+        # Getting form data
+        answer = request.form['answer']
+        # storing the answer in the DB
+        db.execute("""update question set answer = ? where id = ?;""",
+                   [answer, question_id])
+        db.commit()
+        return redirect(url_for('unanswered'))
+    else:
+        # Getting the current user
+        user = get_current_user()
+        # Getting the question from the DB
+        cursor = db.execute("""select id, question from question
+                            where id = ?;""", [question_id])
+        question = cursor.fetchone()
+        # Return the answer page according to the login user
+        return render_template('answer.html', user=user, question=question)
 
 
 @app.route('/ask', methods=["GET", "POST"])
