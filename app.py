@@ -112,8 +112,8 @@ def login():
         return render_template('login.html', user=user)
 
 
-@app.route('/question')
-def question():
+@app.route('/question/<question_id>')
+def question(question_id):
     """
     The question page that display question detail
     (question, answer, user, expert).
@@ -121,9 +121,19 @@ def question():
 
     # Getting the current user
     user = get_current_user()
+    # Getting the DB connection
+    db = get_db()
+    # Getting the question from the DB
+    cursor = db.execute("""select question, answer,
+                        expert.name as expert, asker.name as asker
+                        from question
+                        join user as expert on expert.id = question.expert_id
+                        join user as asker on asker.id = question.asked_by_id
+                        where question.id = ?;""", [question_id])
+    question = cursor.fetchone()
 
     # Return the question page according to the login user
-    return render_template('question.html', user=user)
+    return render_template('question.html', user=user, question=question)
 
 
 @app.route('/answer/<question_id>', methods=["GET", "POST"])
