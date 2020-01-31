@@ -128,15 +128,33 @@ def answer():
     return render_template('answer.html', user=user)
 
 
-@app.route('/ask')
+@app.route('/ask', methods=["GET", "POST"])
 def ask():
     """The ask page that allows the user to ask a question."""
 
     # Getting the current user
     user = get_current_user()
 
-    # Return the ask page according to the login user
-    return render_template('ask.html', user=user)
+    # Getting the current DB connection
+    db = get_db()
+
+    if request.method == "POST":
+        # Getting the form data
+        question = request.form['question']
+        expert = request.form['expert']
+        # Storing the question in the DB
+        db.execute("""insert into question (question, asked_by_id, expert_id)
+                    values (?, ?, ?);""", [question, user['id'], expert])
+        db.commit()
+        # Redirecting to the home page
+        return redirect(url_for('index'))
+    else:
+        # Getting all experts from the DB
+        cursor = db.execute("select id, name from user where is_expert = 1;")
+        experts = cursor.fetchall()
+
+        # Return the ask page according to the login user
+        return render_template('ask.html', user=user, experts=experts)
 
 
 @app.route('/unanswered')
