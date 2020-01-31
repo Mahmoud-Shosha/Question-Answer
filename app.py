@@ -164,8 +164,15 @@ def unanswered():
     # Getting the current user
     user = get_current_user()
 
+    # Getting only the unanswered questions for this experts
+    db = get_db()
+    cursor = db.execute("""select question.id, question, name from question
+                        join user on user.id = question.asked_by_id
+                        where answer is null and expert_id = ?""",
+                        [user['id']])
+    questions = cursor.fetchall()
     # Return the unanswered page according to the login user
-    return render_template('unanswered.html', user=user)
+    return render_template('unanswered.html', user=user, questions=questions)
 
 
 @app.route('/users')
