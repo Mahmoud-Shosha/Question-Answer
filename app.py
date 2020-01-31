@@ -40,9 +40,18 @@ def index():
 
     # Getting the current user
     user = get_current_user()
-
+    # Getting the DB connection
+    db = get_db()
+    # Getting all answered questions from the DB
+    cursor = db.execute("""select question.id, question,
+                        expert.name as expert, asker.name as asker
+                        from question
+                        join user as expert on expert.id = question.expert_id
+                        join user as asker on asker.id = question.asked_by_id
+                        where question.answer is not null;""")
+    questions = cursor.fetchall()
     # Return the home page according to the login user
-    return render_template('home.html', user=user)
+    return render_template('home.html', user=user, questions=questions)
 
 
 @app.route('/register', methods=['GET', 'POST'])
