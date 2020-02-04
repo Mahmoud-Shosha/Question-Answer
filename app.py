@@ -58,15 +58,25 @@ def index():
 def register():
     """The registeration page that allow you to register in the application."""
 
+    # Getting the current user
+    user = get_current_user()
+
     if request.method == 'POST':
         # Getting the form data
         name = request.form['name']
         password = request.form['password']
+        # Getting the current DB
+        db = get_db()
+        # Checking that the user is not exist
+        cursor = db.execute("select id from user where name = ?", [name])
+        found_user = cursor.fetchone()
+        if found_user:
+            return render_template('register.html', user=user,
+                                   error="User already exist !")
         # Hashin the password
         password = generate_password_hash(request.form['password'],
                                           method='sha256')
         # Storing the user in the database
-        db = get_db()
         db.execute("""insert into user (name, password, is_expert, is_admin)
                    values (?, ?, ?, ?)""", [name, password, 0, 0])
         db.commit()
@@ -75,8 +85,6 @@ def register():
         # Redirecting the loged in user to the home page
         return redirect(url_for('index'))
     else:
-        # Getting the current user
-        user = get_current_user()
         # Return the user registeration page according to the login user
         return render_template('register.html', user=user)
 
