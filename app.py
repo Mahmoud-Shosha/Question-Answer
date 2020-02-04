@@ -148,6 +148,13 @@ def question(question_id):
 def answer(question_id):
     """The answer page that allows an expert to answer a specific question."""
 
+    # Getting the current user
+    user = get_current_user()
+
+    # Checking if the current user is logedin or redirect to login page
+    if not user:
+        return redirect(url_for('login'))
+
     # Get the current DB connection
     db = get_db()
 
@@ -160,8 +167,6 @@ def answer(question_id):
         db.commit()
         return redirect(url_for('unanswered'))
     else:
-        # Getting the current user
-        user = get_current_user()
         # Getting the question from the DB
         cursor = db.execute("""select id, question from question
                             where id = ?;""", [question_id])
@@ -176,6 +181,10 @@ def ask():
 
     # Getting the current user
     user = get_current_user()
+
+    # Checking if the current user is logedin or redirect to login page
+    if not user:
+        return redirect(url_for('login'))
 
     # Getting the current DB connection
     db = get_db()
@@ -206,6 +215,10 @@ def unanswered():
     # Getting the current user
     user = get_current_user()
 
+    # Checking if the current user is logedin or redirect to login page
+    if not user:
+        return redirect(url_for('login'))
+
     # Getting only the unanswered questions for this experts
     db = get_db()
     cursor = db.execute("""select question.id, question, name from question
@@ -227,6 +240,10 @@ def users():
     # Getting the current user
     user = get_current_user()
 
+    # Checking if the current user is logedin or redirect to login page
+    if not user:
+        return redirect(url_for('login'))
+
     # Getting all users from the DB
     db = get_db()
     cursor = db.execute("select id, name, is_expert from user;")
@@ -239,6 +256,13 @@ def users():
 @app.route('/promote/<user_id>')
 def promote(user_id):
     """Promote the given user."""
+
+    # Getting the current user
+    user = get_current_user()
+
+    # Checking if the current user is logedin or redirect to login page
+    if not user:
+        return redirect(url_for('login'))
 
     # Settin the user as expert in the DB
     db = get_db()
@@ -255,7 +279,8 @@ def logout():
     """
     The logout page that logs out the user and redirets to the home page.
     """
-    session.pop('user')
+
+    session.pop('user', None)
 
     return redirect(url_for('index'))
 
