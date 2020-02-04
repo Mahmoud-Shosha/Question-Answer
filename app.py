@@ -155,6 +155,10 @@ def answer(question_id):
     if not user:
         return redirect(url_for('login'))
 
+    # Allow only experts
+    if user['is_expert'] == 0:
+        return redirect(url_for('index'))
+
     # Get the current DB connection
     db = get_db()
 
@@ -185,6 +189,10 @@ def ask():
     # Checking if the current user is logedin or redirect to login page
     if not user:
         return redirect(url_for('login'))
+
+    # Allow only regular users (not expert or admin)
+    if user['is_admin'] == 1 or user['is_expert'] == 1:
+        return redirect(url_for('index'))
 
     # Getting the current DB connection
     db = get_db()
@@ -219,6 +227,10 @@ def unanswered():
     if not user:
         return redirect(url_for('login'))
 
+    # Allow only experts
+    if user['is_expert'] == 0:
+        return redirect(url_for('index'))
+
     # Getting only the unanswered questions for this experts
     db = get_db()
     cursor = db.execute("""select question.id, question, name from question
@@ -244,6 +256,10 @@ def users():
     if not user:
         return redirect(url_for('login'))
 
+    # Allow only admins
+    if user['is_admin'] == 0:
+        return redirect(url_for('index'))
+
     # Getting all users from the DB
     db = get_db()
     cursor = db.execute("select id, name, is_expert from user;")
@@ -263,6 +279,10 @@ def promote(user_id):
     # Checking if the current user is logedin or redirect to login page
     if not user:
         return redirect(url_for('login'))
+
+    # Allow only admins
+    if user['is_admin'] == 0:
+        return redirect(url_for('index'))
 
     # Settin the user as expert in the DB
     db = get_db()
