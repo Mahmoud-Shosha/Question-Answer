@@ -93,6 +93,9 @@ def register():
 def login():
     """The login page that allow you to login in the application."""
 
+    # Getting the current user
+    user = get_current_user()
+
     if request.method == 'POST':
         # Getting the form data
         name = request.form['name']
@@ -102,20 +105,21 @@ def login():
         cursor = db.execute("""select id, name, password from user
                             where name = ?;""", [name])
         user = cursor.fetchone()
-        # Checking the user password
-        hashed_password = user['password']
-        if check_password_hash(hashed_password, password):
-            # login the user
-            session['user'] = user['name']
-            # Redirecting the loged in user to the home page
-            return redirect(url_for('index'))
-        else:
-            # Temporary returning
-            return "Error: {} ==>> {}".format(name, password)
+        # Checking whether the user is exist
+        if user:
+            # Checking the user password
+            hashed_password = user['password']
+            if check_password_hash(hashed_password, password):
+                # login the user
+                session['user'] = user['name']
+                # Redirecting the loged in user to the home page
+                return redirect(url_for('index'))
+        # Return the user login page according to the login user
+        # with the error message
+        error = "The user name or password is not correct !"
+        return render_template('login.html', user=user, error=error)
 
     else:
-        # Getting the current user
-        user = get_current_user()
         # Return the user login page according to the login user
         return render_template('login.html', user=user)
 
