@@ -20,3 +20,11 @@ def get_db_cursor():
     if not hasattr(g, 'db'):
         g.db = connect_db()
     return g.db.cursor()
+
+
+def init_db():
+    """Create the DB tables"""
+    db = connect_db()
+    db_sursor = db.cursor()
+    db_sursor.execute(open('schema.sql', 'r').read())
+    db.close()
