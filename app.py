@@ -3,12 +3,11 @@ from flask import (Flask, g, render_template, request, session,
 from database import get_db_cursor
 from werkzeug.security import generate_password_hash, check_password_hash
 
-import os
-
 
 # MAke a flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = (
+    b'\xc2\xfe\xdc\x16\xecq;\xc1\xef\xc3\x12\x91\x1f\xc6+y^ \x00\x0f\x1duI\n')
 
 
 # Get the current user helper function
