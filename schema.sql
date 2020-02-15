@@ -1,12 +1,12 @@
-create table user (
-    id serial primary key,
-    name text not null,
-    password text not null,
-    is_expert boolean not null,
-    is_admin boolean not null
-);
+-- create table users (
+--     id serial primary key,
+--     name text not null,
+--     password text not null,
+--     is_expert boolean not null,
+--     is_admin boolean not null
+-- );
 
-create table question (
+create table questions (
     id serial primary key,
     question text not null,
     answer text,
