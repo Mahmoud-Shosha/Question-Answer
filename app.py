@@ -1,6 +1,6 @@
 from flask import (Flask, g, render_template, request, session,
                    url_for, redirect)
-from database import get_db
+from database import get_db_cursor
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import os
@@ -18,10 +18,10 @@ def get_current_user():
     user = None
 
     if 'user' in session:
-        db = get_db()
-        cursor = db.execute("select * from user where name = ?;",
-                            [session['user']])
-        user = cursor.fetchone()
+        db_cursor = get_db_cursor()
+        db_cursor.execute("select * from users where name = %s;",
+                          (session['user'], ))
+        user = db_cursor.fetchone()
 
     return user
 
@@ -41,15 +41,16 @@ def index():
     # Getting the current user
     user = get_current_user()
     # Getting the DB connection
-    db = get_db()
+    db_cursor = get_db_cursor()
     # Getting all answered questions from the DB
-    cursor = db.execute("""select question.id, question,
+    db_cursor.execute("""select questions.id, question,
                         expert.name as expert, asker.name as asker
-                        from question
-                        join user as expert on expert.id = question.expert_id
-                        join user as asker on asker.id = question.asked_by_id
-                        where question.answer is not null;""")
-    questions = cursor.fetchall()
+                        from questions
+                        join users as expert on expert.id = questions.expert_id
+                        join users as asker on asker.id = questions.asked_by_id
+                        where questions.answer is not null;""")
+    questions = db_cursor.fetchall()
+    print(questions)
     # Return the home page according to the login user
     return render_template('home.html', user=user, questions=questions)
 
@@ -66,10 +67,10 @@ def register():
         name = request.form['name']
         password = request.form['password']
         # Getting the current DB
-        db = get_db()
+        db_cursor = get_db_cursor()
         # Checking that the user is not exist
-        cursor = db.execute("select id from user where name = ?", [name])
-        found_user = cursor.fetchone()
+        db_cursor.execute("select id from users where name = %s", [name])
+        found_user = db_cursor.fetchone()
         if found_user:
             return render_template('register.html', user=user,
                                    error="User already exist !")
@@ -77,9 +78,8 @@ def register():
         password = generate_password_hash(request.form['password'],
                                           method='sha256')
         # Storing the user in the database
-        db.execute("""insert into user (name, password, is_expert, is_admin)
-                   values (?, ?, ?, ?)""", [name, password, 0, 0])
-        db.commit()
+        db_cursor.execute("""insert into users (name, password, is_expert, is_admin)
+                   values (%s, %s, %s, %s)""", (name, password, False, False))
         # Login the user
         session['user'] = name
         # Redirecting the loged in user to the home page
@@ -101,10 +101,10 @@ def login():
         name = request.form['name']
         password = request.form['password']
         # Getting the user from the DB
-        db = get_db()
-        cursor = db.execute("""select id, name, password from user
-                            where name = ?;""", [name])
-        user = cursor.fetchone()
+        db_cursor = get_db_cursor()
+        db_cursor.execute("""select id, name, password from users
+                            where name = %s;""", (name, ))
+        user = db_cursor.fetchone()
         # Checking whether the user is exist
         if user:
             # Checking the user password
@@ -134,15 +134,15 @@ def question(question_id):
     # Getting the current user
     user = get_current_user()
     # Getting the DB connection
-    db = get_db()
+    db_cursor = get_db_cursor()
     # Getting the question from the DB
-    cursor = db.execute("""select question, answer,
+    db_cursor.execute("""select question, answer,
                         expert.name as expert, asker.name as asker
-                        from question
-                        join user as expert on expert.id = question.expert_id
-                        join user as asker on asker.id = question.asked_by_id
-                        where question.id = ?;""", [question_id])
-    question = cursor.fetchone()
+                        from questions
+                        join users as expert on expert.id = questions.expert_id
+                        join users as asker on asker.id = questions.asked_by_id
+                        where questions.id = %s;""", (question_id, ))
+    question = db_cursor.fetchone()
 
     # Return the question page according to the login user
     return render_template('question.html', user=user, question=question)
@@ -160,25 +160,25 @@ def answer(question_id):
         return redirect(url_for('login'))
 
     # Allow only experts
-    if user['is_expert'] == 0:
+    if not user['is_expert']:
         return redirect(url_for('index'))
 
     # Get the current DB connection
-    db = get_db()
+    db_cursor = get_db_cursor()
 
     if request.method == "POST":
         # Getting form data
         answer = request.form['answer']
         # storing the answer in the DB
-        db.execute("""update question set answer = ? where id = ?;""",
-                   [answer, question_id])
-        db.commit()
+        db_cursor.execute("""update questions set answer = %s where
+                          id = %s;""",
+                          (answer, question_id))
         return redirect(url_for('unanswered'))
     else:
         # Getting the question from the DB
-        cursor = db.execute("""select id, question from question
-                            where id = ?;""", [question_id])
-        question = cursor.fetchone()
+        db_cursor.execute("""select id, question from questions
+                            where id = %s;""", (question_id, ))
+        question = db_cursor.fetchone()
         # Return the answer page according to the login user
         return render_template('answer.html', user=user, question=question)
 
@@ -195,26 +195,25 @@ def ask():
         return redirect(url_for('login'))
 
     # Allow only regular users (not expert or admin)
-    if user['is_admin'] == 1 or user['is_expert'] == 1:
+    if user['is_admin'] or user['is_expert']:
         return redirect(url_for('index'))
 
     # Getting the current DB connection
-    db = get_db()
+    db_cursor = get_db_cursor()
 
     if request.method == "POST":
         # Getting the form data
         question = request.form['question']
         expert = request.form['expert']
         # Storing the question in the DB
-        db.execute("""insert into question (question, asked_by_id, expert_id)
-                    values (?, ?, ?);""", [question, user['id'], expert])
-        db.commit()
+        db_cursor.execute("""insert into questions (question, asked_by_id, expert_id)
+                    values (%s, %s, %s);""", (question, user['id'], expert))
         # Redirecting to the home page
         return redirect(url_for('index'))
     else:
         # Getting all experts from the DB
-        cursor = db.execute("select id, name from user where is_expert = 1;")
-        experts = cursor.fetchall()
+        db_cursor.execute("select id, name from users where is_expert = True;")
+        experts = db_cursor.fetchall()
 
         # Return the ask page according to the login user
         return render_template('ask.html', user=user, experts=experts)
@@ -232,16 +231,16 @@ def unanswered():
         return redirect(url_for('login'))
 
     # Allow only experts
-    if user['is_expert'] == 0:
+    if not user['is_expert']:
         return redirect(url_for('index'))
 
     # Getting only the unanswered questions for this experts
-    db = get_db()
-    cursor = db.execute("""select question.id, question, name from question
-                        join user on user.id = question.asked_by_id
-                        where answer is null and expert_id = ?""",
-                        [user['id']])
-    questions = cursor.fetchall()
+    db_cursor = get_db_cursor()
+    db_cursor.execute("""select questions.id, question, name from questions
+                        join users on users.id = questions.asked_by_id
+                        where answer is null and expert_id = %s""",
+                      (user['id'], ))
+    questions = db_cursor.fetchall()
     # Return the unanswered page according to the login user
     return render_template('unanswered.html', user=user, questions=questions)
 
@@ -261,13 +260,13 @@ def users():
         return redirect(url_for('login'))
 
     # Allow only admins
-    if user['is_admin'] == 0:
+    if not user['is_admin']:
         return redirect(url_for('index'))
 
     # Getting all users from the DB
-    db = get_db()
-    cursor = db.execute("select id, name, is_expert from user;")
-    users = cursor.fetchall()
+    db_cursor = get_db_cursor()
+    db_cursor.execute("select id, name, is_expert from users;")
+    users = db_cursor.fetchall()
 
     # Return the users page according to the login user
     return render_template('users.html', user=user, users=users)
@@ -285,14 +284,13 @@ def promote(user_id):
         return redirect(url_for('login'))
 
     # Allow only admins
-    if user['is_admin'] == 0:
+    if not user['is_admin']:
         return redirect(url_for('index'))
 
     # Settin the user as expert in the DB
-    db = get_db()
-    db.execute("update user set is_expert = 1 where id = ?;",
-               [user_id])
-    db.commit()
+    db_cursor = get_db_cursor()
+    db_cursor.execute("update users set is_expert = True where id = %s;",
+                      (user_id, ))
 
     # Redirect to the users page
     return redirect(url_for('users'))
